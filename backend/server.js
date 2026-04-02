@@ -77,6 +77,49 @@ app.delete('/tareas/:id', (req, res) => {
   });
 });
 
+//filtrar usuario
+app.get('/tareas/usuario/:usuario_id', (req, res) => {
+  const { usuario_id } = req.params;
+
+  db.all(
+    'SELECT * FROM tareas WHERE usuario_id = ?',
+    [usuario_id],
+    (err, rows) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json(rows);
+      }
+    }
+  );
+});
+
+//pendientes
+app.get('/recomendacion/:usuario_id', (req, res) => {
+  const { usuario_id } = req.params;
+
+  db.all(
+    'SELECT * FROM tareas WHERE usuario_id = ?',
+    [usuario_id],
+    (err, tareas) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      const pendientes = tareas.filter(t => t.completado === 0);
+
+      if (pendientes.length === 0) {
+        res.json({ mensaje: 'Sin tareas pendientes' });
+      } else {
+        res.json({
+          recomendacion: 'Por hacer:',
+          tarea: pendientes[0]
+        });
+      }
+    }
+  );
+});
+
 //iniciar server
 app.listen(PORT, () => {
     console.log(`Servidor en http://localhost:${PORT}`);

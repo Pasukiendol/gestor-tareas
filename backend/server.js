@@ -49,7 +49,9 @@ app.post('/tareas', (req, res) =>{
 //marcar completada
 app.put('/tareas/:id', (req, res) => {
     const { id } = req.params;
-    const { completado } = req.body;
+    let { completado } = req.body;
+
+    completado = Number(completado);
 
     db.run(
         'UPDATE tareas SET completado = ? WHERE id = ?',
@@ -68,7 +70,7 @@ app.put('/tareas/:id', (req, res) => {
 app.delete('/tareas/:id', (req, res) => {
   const { id } = req.params;
 
-  db.run('DELETE FROM tareas WHERE id = ?', id, function (err) {
+  db.run('DELETE FROM tareas WHERE id = ?', [id], function (err) {
     if (err) {
       res.status(500).json({ error: err.message });
     } else {
@@ -94,7 +96,7 @@ app.get('/tareas/usuario/:usuario_id', (req, res) => {
   );
 });
 
-//pendientes
+//recomendaciones
 app.get('/recomendacion/:usuario_id', (req, res) => {
   const { usuario_id } = req.params;
 
@@ -106,16 +108,31 @@ app.get('/recomendacion/:usuario_id', (req, res) => {
         return res.status(500).json({ error: err.message });
       }
 
-      const pendientes = tareas.filter(t => t.completado === 0);
+      const pendientes = tareas.filter(t => !Number(t.completado));
+
+      if (tareas.length === 0) {
+        return res.json({
+          mensaje: 'Sin tareas.'
+        });
+      }
 
       if (pendientes.length === 0) {
-        res.json({ mensaje: 'Sin tareas pendientes' });
-      } else {
-        res.json({
-          recomendacion: 'Por hacer:',
+        return res.json({
+          mensaje: 'Has completado todas tus tareas.'
+        });
+      }
+
+      if (pendientes.length > 3) {
+        return res.json({
+          mensaje: 'Tareas pendientes, empieza con esta:',
           tarea: pendientes[0]
         });
       }
+
+      return res.json({
+        mensaje: 'Continua con esta tarea:',
+        tarea: pendientes[0]
+      });
     }
   );
 });

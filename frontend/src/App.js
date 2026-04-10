@@ -4,6 +4,8 @@ function App() {
   const [tareas, setTareas] = useState([]);
   const [titulo, setTitulo] = useState("");
   const [recomendacion, setRecomendacion] = useState("");
+  const [prioridad, setPrioridad] = useState(0);
+  const [filtro, setFiltro] = useState("todas");
 
   // Pillar tareas
   const cargarTareas = () => {
@@ -35,16 +37,15 @@ function App() {
       },
       body: JSON.stringify({
         titulo,
-        usuario_id: 1
+        usuario_id: 1,
+        prioridad
       })
-    })
-      .then(res => res.json())
-      .then(() => {
-        setTitulo("");
-        cargarTareas();
-        cargarRecomendacion();
-      });
-  };
+    }).then(() => {
+    setTitulo("");
+    cargarTareas();
+    cargarRecomendacion();
+  });
+};
 
   // Completar tarea
   const completarTarea = (tarea) => {
@@ -77,6 +78,12 @@ function App() {
     });
   };
 
+const tareasFiltradas = tareas.filter(t => {
+  if (filtro === "pendientes") return !Number(t.completado);
+  if (filtro === "completadas") return Number(t.completado);
+  return true;
+});
+
   return (
   <div style={{ maxWidth: "600px", margin: "0 auto", fontFamily: "Arial" }}>
     <h1>Gestor de Tareas</h1>
@@ -93,13 +100,21 @@ function App() {
         placeholder="Nueva tarea"
         style={{ padding: "8px", width: "70%" }}
       />
+      <select value={prioridad} onChange={e => setPrioridad(Number(e.target.value))}>
+        <option value={0}>🟢 Baja</option>
+        <option value={1}>🟡 Media</option>
+        <option value={2}>🔴 Alta</option>
+      </select>
       <button onClick={agregarTarea} style={{ padding: "8px" }}>
         Añadir
       </button>
+      <button onClick={() => setFiltro("todas")}>Todas</button>
+      <button onClick={() => setFiltro("pendientes")}>Pendientes</button>
+      <button onClick={() => setFiltro("completadas")}>Completadas</button>
     </div>
 
     <ul style={{ listStyle: "none", padding: 0 }}>
-      {tareas.map(t => (
+      {tareasFiltradas.map(t => (
         <li
           key={t.id}
           style={{
@@ -111,11 +126,19 @@ function App() {
             borderRadius: "8px"
           }}
         >
-          <span style={{
-            textDecoration: Number(t.completado) ? "line-through" : "none"
-          }}>
-            {t.titulo}
-          </span>
+          <div>
+            <span style={{
+              textDecoration: Number(t.completado) ? "line-through" : "none"
+            }}>
+              {t.titulo}
+            </span>
+
+            <span style={{ marginLeft: "10px" }}>
+              {t.prioridad === 2 && "🔴 Alta"}
+              {t.prioridad === 1 && "🟡 Media"}
+              {t.prioridad === 0 && "🟢 Baja"}
+            </span>
+          </div>
 
           <div>
             <button onClick={() => completarTarea(t)}>
